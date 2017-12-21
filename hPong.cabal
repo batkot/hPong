@@ -1,0 +1,46 @@
+name:                hPong
+version:             0.1.0.0
+synopsis:            Classic Pong in CommandLine
+description:         Classic Pong in CommandLine written for fun
+homepage:            https://github.com/batkot/hPong#readme
+license:             OtherLicense
+license-file:        LICENSE
+author:              Tomasz Batko
+maintainer:          batkot@protonmail.com
+copyright:           2017 Tomasz Batko
+category:            CLI
+build-type:          Simple
+extra-source-files:  README.md
+cabal-version:       >=1.10
+
+library
+  hs-source-dirs:      src
+  exposed-modules:     Lib
+  build-depends:       base >= 4.7 && < 5
+  default-language:    Haskell2010
+
+executable hPong
+  hs-source-dirs:      app
+  main-is:             Main.hs
+  ghc-options:         -threaded -rtsopts -with-rtsopts=-N
+  build-depends:       base
+                     , hPong
+                     , ansi-terminal >= 0.5
+                     , async
+  default-language:    Haskell2010
+
+test-suite hPong-test
+  type:                exitcode-stdio-1.0
+  hs-source-dirs:      test
+  main-is:             Spec.hs
+  build-depends:       base
+                     , hPong
+                     , test-framework
+                     , test-framework-quickcheck2
+                     , QuickCheck
+  ghc-options:         -threaded -rtsopts -with-rtsopts=-N
+  default-language:    Haskell2010
+
+source-repository head
+  type:     git
+  location: https://github.com/batkot/hPong
