@@ -9,7 +9,7 @@ import System.IO
 import Data.Maybe (catMaybes)
 import Data.List (nub, (\\))
 
-import Lib
+import Pair
 
 second :: Int
 second = 1000000;
@@ -17,7 +17,7 @@ second = 1000000;
 fpsToInterval :: Int -> Int
 fpsToInterval x = second `div` x
 
-data Pos = Pos Int Int deriving (Eq)
+type Pos = Pair Int
 data BoxSize = BoxSize Int Int
 data Ball = Ball Pos Pos
 newtype Rocket = Rocket [Pos]
@@ -37,25 +37,22 @@ data GameCommand = PlayerOne RocketCommand
                  deriving (Show, Eq)
 
 upPos :: Pos
-upPos = Pos 0 (-1) 
+upPos = Pair 0 (-1)
 
 downPos :: Pos
-downPos = Pos 0 1
-
-addPos :: Pos -> Pos -> Pos
-addPos (Pos c r) (Pos c2 r2) = Pos (c + c2) (r + r2)
+downPos = Pair  0 1
 
 playerOneRocket :: Rocket
-playerOneRocket = Rocket [Pos 0 13, Pos 0 14, Pos 0 15, Pos 0 16]
+playerOneRocket = Rocket [Pair 0 13, Pair 0 14, Pair 0 15, Pair 0 16]
 
 playerTwoRocket :: Rocket
-playerTwoRocket = Rocket [Pos 100 13, Pos 100 14, Pos 100 15, Pos 100 16]
+playerTwoRocket = Rocket [Pair 100 13, Pair 100 14, Pair 100 15, Pair 100 16]
 
 boardSize :: BoxSize 
 boardSize = BoxSize 100 30
 
 initBall :: Ball
-initBall = Ball (Pos 50 15) (Pos 1 1)
+initBall = Ball (Pair 50 15) (Pair 1 1)
 
 emptyState :: State
 emptyState = State initBall boardSize playerOneRocket playerTwoRocket
@@ -74,7 +71,7 @@ printBoard (BoxSize w h) = do
         line = " " ++ replicate w '-' ++ " "
 
 draw :: String -> Pos ->  IO ()
-draw x (Pos c r) = do
+draw x (Pair c r) = do
     setCursorPosition r c
     putStr x
 
@@ -133,24 +130,24 @@ gameLoop render cmds state =
         calcState = foldl updateState state 
 
 updateBall :: Ball -> BoxSize -> [Pos] -> Ball
-updateBall (Ball (Pos c r) (Pos vc vr)) (BoxSize w h) rockets
-    | newR == 0 || newR == h + 1 = Ball (Pos c r) (Pos vc (-vr))
-    | (newC == 0 || newC == w) && newPos `elem` rockets = Ball (Pos c r) (Pos (-vc) vr)
+updateBall (Ball (Pair c r) (Pair vc vr)) (BoxSize w h) rockets
+    | newR == 0 || newR == h + 1 = Ball (Pair c r) (Pair vc (-vr))
+    | (newC == 0 || newC == w) && newPos `elem` rockets = Ball (Pair c r) (Pair (-vc) vr)
     | newC == 0 || newC == w = initBall
-    | otherwise = Ball (Pos newC newR) (Pos vc vr)
+    | otherwise = Ball (Pair newC newR) (Pair vc vr)
     where
         newR = r + vr
         newC = c + vc 
-        newPos = Pos newC newR
+        newPos = Pair newC newR
 
 updateRocket :: Rocket -> BoxSize -> RocketCommand -> Rocket
-updateRocket r@(Rocket (Pos _ 0:_)) _ Up = r
-updateRocket r@(Rocket rp) _ Up = Rocket $ fmap (addPos upPos) rp
+updateRocket r@(Rocket (Pair _ 0:_)) _ Up = r
+updateRocket r@(Rocket rp) _ Up = Rocket $ fmap (add upPos) rp
 updateRocket r@(Rocket rp) (BoxSize _ h) Down 
     | maxRow rp == h = r
-    | otherwise      = Rocket $ fmap (addPos downPos) rp
+    | otherwise      = Rocket $ fmap (add downPos) rp
     where 
-        extractRow (Pos _ r) = r
+        extractRow (Pair _ r) = r
         maxRow = maximum . fmap extractRow
 
 updateState :: State -> GameCommand -> State
