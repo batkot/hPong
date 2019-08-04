@@ -3,13 +3,14 @@ module Pong
     , Table (..)
     , Ball (..)
     , Rocket (..)
-    , State (..)
+    , PongState (..)
     , GameCommand (..)
     , RocketCommand (..)
     , initBall 
     , updateState
     , gameLoop
     , mkRocket
+    , PongGameMonad(..)
     ) where
 
 import Pair
@@ -22,20 +23,24 @@ newtype Rocket = Rocket [Pos] deriving Show
 mkRocket :: Int -> Int -> Int -> Rocket
 mkRocket r s l = Rocket $ fmap (Pair r) [s..(s+l)]
 
-data State = State 
+data PongState = PongState
     { ball :: Ball
     , table :: Table
     , playerOne :: Rocket
-    , playerTwo :: Rocket } deriving Show
+    , playerTwo :: Rocket 
+    } deriving Show
 
-data RocketCommand = Up
-                   | Down
-                   deriving (Show, Eq)
+data RocketCommand 
+    = Up
+    | Down
+    deriving (Show, Eq)
 
-data GameCommand = PlayerOne RocketCommand
-                 | PlayerTwo RocketCommand
-                 | Tick 
-                 deriving (Show, Eq)
+data GameCommand 
+    = PlayerOne RocketCommand
+    | PlayerTwo RocketCommand
+    | Tick 
+    | Quit
+    deriving (Show, Eq)
 
 initBall :: Ball
 initBall = Ball (Pair 50 15) (Pair 1 1)
@@ -69,16 +74,20 @@ updateRocket r@(Rocket rp) (Table _ h) Down
         extractRow (Pair _ r) = r
         maxRow = maximum . fmap extractRow
 
-updateState :: State -> GameCommand -> State
-updateState s@(State ball box (Rocket p1) (Rocket p2)) Tick = s { ball = updateBall ball box (p1 ++ p2) }
-updateState s@(State _ box p _) (PlayerOne cmd) = s { playerOne = updateRocket p box cmd }
-updateState s@(State _ box _ p) (PlayerTwo cmd) = s { playerTwo = updateRocket p box cmd }
+updateState :: PongState -> GameCommand -> PongState
+updateState s@(PongState ball box (Rocket p1) (Rocket p2)) Tick = s { ball = updateBall ball box (p1 ++ p2) }
+updateState s@(PongState _ box p _) (PlayerOne cmd) = s { playerOne = updateRocket p box cmd }
+updateState s@(PongState _ box _ p) (PlayerTwo cmd) = s { playerTwo = updateRocket p box cmd }
 
-gameLoop :: Monad m => (State -> State -> m()) -> m [GameCommand] -> State -> m State
-gameLoop render cmds state = 
-    fmap (calcState . (:) Tick) cmds
-    >>= (\newState -> 
-            render state newState 
-            >> gameLoop render cmds newState)
-    where
-        calcState = foldl updateState state 
+gameLoop :: PongGameMonad m => PongState -> m PongState
+gameLoop state = 
+    fmap (calcState . (:) Tick) getCommands
+    >>= (\newState ->
+        renderState state newState
+        >> gameLoop newState)
+  where
+    calcState = foldl updateState state 
+
+class Monad m => PongGameMonad m where
+    renderState :: PongState -> PongState -> m ()
+    getCommands :: m [GameCommand]

@@ -22,8 +22,8 @@ move old new g
 renderBallDiff :: Ball -> Ball -> IO ()
 renderBallDiff (Ball oldPos _) (Ball newPos _) = move oldPos newPos "@"
 
-renderStateDiff :: State -> State -> IO()
-renderStateDiff (State oldBall _ oldP1 oldP2) (State newBall _ newP1 newP2) =
+renderStateDiff :: PongState -> PongState -> IO ()
+renderStateDiff (PongState oldBall _ oldP1 oldP2) (PongState newBall _ newP1 newP2) =
     renderBallDiff oldBall newBall 
     >> renderRocketDiff oldP1 newP1 
     >> renderRocketDiff oldP2 newP2 
@@ -47,8 +47,8 @@ printBoard (Table w h) = do
     where
         line = " " ++ replicate w '-' ++ " "
 
-printState :: State -> IO()
-printState (State ball board p1 p2) = 
+printState :: PongState -> IO()
+printState (PongState ball board p1 p2) = 
     printBoard board >>
     printBall ball >>
     printRocket p1 >>
